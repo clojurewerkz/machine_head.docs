@@ -153,4 +153,7 @@ You can verify your installation in the REPL:
     $ lein repl
     user=> (require '[clojurewerkz.machine-head.client :as mh])
     ;= nil
-    user=> (mh/connect)
+    user=> (mh/connect "tcp://127.0.0.1:1883" (mh/generate-id))
+    ;= #<MqttClient org.eclipse.paho.client.mqttv3.MqttClient@4819d03a>
+
+
