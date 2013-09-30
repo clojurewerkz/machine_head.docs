@@ -32,3 +32,17 @@ Machine Head requires Clojure 1.4+. The latest stable release is recommended.
 ## Supported MQTT Brokers
 
 Machine Head is tested against [RabbitMQ 3.x MQTT plugin](http://www.rabbitmq.com/mqtt.html) and [Mosquitto](http://mosquitto.org/).
+
+
+## Overview
+
+Machine Head is a Clojure client for [MQTT](http://mqtt.org/) v3.1 brokers. MQTT is
+an efficient messaging protocol designed primarily for low-power devices such as
+telemetry sensors. 
+
+Clients communicate with MQTT brokers such as RabbitMQ and Mosquitto. Clients that
+publish messages are called *producers* or *publishers*, those that consume
+messages are *consumers* or *subscribers*. Message distribution happens in
+communication points known as *topics*, which filter published messages and
+deliver those that match to consumers.
+
