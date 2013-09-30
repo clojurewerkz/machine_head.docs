@@ -46,3 +46,96 @@ messages are *consumers* or *subscribers*. Message distribution happens in
 communication points known as *topics*, which filter published messages and
 deliver those that match to consumers.
 
+Machine Head is a minimalistic Clojure MQTT client. It is designed with
+ease of use and efficiency in mind.
+
+
+## Installing MQTT Broker
+
+### RabbitMQ
+
+The RabbitMQ site has a good [installation
+guide](http://www.rabbitmq.com/install.html) that addresses many
+operating systems.  On Mac OS X, the fastest way to install RabbitMQ
+is with [Homebrew](http://mxcl.github.com/homebrew/):
+
+    brew install rabbitmq
+
+Next, enable MQTT plugin:
+
+    rabbitmq-plugins enable rabbitmq_mqtt
+
+then run the broker:
+
+    rabbitmq-server
+
+On Debian and Ubuntu, you can either [download the RabbitMQ .deb
+package](http://www.rabbitmq.com/server.html) and install it with
+[dpkg](http://www.debian.org/doc/FAQ/ch-pkgtools.en.html) or make use
+of the [RabbitMQ apt
+repository](http://www.rabbitmq.com/debian.html#apt).
+
+For RPM-based distributions like RedHat or CentOS, the RabbitMQ team
+provides an [RPM package](http://www.rabbitmq.com/install.html#rpm).
+
+<div class="alert alert-error"> <strong>Note:</strong> The RabbitMQ
+package that ships with some of the recent Ubuntu versions (for
+example, 11.10 and 12.04) is outdated and *may not ship with MQTT
+plugin* (you will need at least RabbitMQ v3.0 for use with this
+guide).  </div>
+
+
+
+### Mosquitto
+
+On Mac OS X, the fastest way to install Mosquitto is with
+[Homebrew](http://mxcl.github.com/homebrew/):
+
+    brew install mosquitto
+
+then run the broker:
+
+    # alter configuration file path depending on your
+    # Homebrew root location
+    mosquitto /usr/local/etc/mosquitto/mosquitto.conf
+
+
+## Adding Langohr Dependency To Your Project
+
+Langohr artifacts are [released to Clojars](https://clojars.org/com.novemberain/langohr).
+
+### With Leiningen
+
+``` clojure
+[com.novemberain/langohr "1.4.1"]
+```
+
+### With Maven
+
+Add Clojars repository definition to your `pom.xml`:
+
+``` xml
+<repository>
+  <id>clojars.org</id>
+  <url>http://clojars.org/repo</url>
+</repository>
+```
+
+And then the dependency:
+
+``` xml
+<dependency>
+  <groupId>com.novemberain</groupId>
+  <artifactId>langohr</artifactId>
+  <version>1.4.1</version>
+</dependency>
+```
+
+### Verifying Your Installation
+
+You can verify your installation in the REPL:
+
+    $ lein repl
+    user=> (require '[clojurewerkz.machine-head.client :as mh])
+    ;= nil
+    user=> (mh/connect)
