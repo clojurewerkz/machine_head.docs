@@ -106,18 +106,33 @@ Langohr artifacts are [released to Clojars](https://clojars.org/com.novemberain/
 
 ### With Leiningen
 
+Add Eclipse Paho repository to `project.clj`:
+
 ``` clojure
-[com.novemberain/langohr "1.4.1"]
+:repositories {"eclipse-paho" {:url "https://repo.eclipse.org/content/groups/paho/"
+                               :snapshots false
+                               :releases {:checksum :fail}}}
+```
+
+
+And then the dependency:
+
+``` clojure
+[clojurewerkz/machine_head "1.0.0-beta1"]
 ```
 
 ### With Maven
 
-Add Clojars repository definition to your `pom.xml`:
+Add Clojars and Eclipse Paho repository definitions to your `pom.xml`:
 
 ``` xml
 <repository>
   <id>clojars.org</id>
   <url>http://clojars.org/repo</url>
+</repository>
+<repository>
+  <id>eclipse-paho</id>
+  <url>https://repo.eclipse.org/content/groups/paho/</url>
 </repository>
 ```
 
@@ -125,9 +140,9 @@ And then the dependency:
 
 ``` xml
 <dependency>
-  <groupId>com.novemberain</groupId>
-  <artifactId>langohr</artifactId>
-  <version>1.4.1</version>
+  <groupId>clojurewerkz</groupId>
+  <artifactId>machine_head</artifactId>
+  <version>1.0.0-beta1</version>
 </dependency>
 ```
 
