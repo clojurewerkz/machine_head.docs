@@ -157,3 +157,95 @@ You can verify your installation in the REPL:
     ;= #<MqttClient org.eclipse.paho.client.mqttv3.MqttClient@4819d03a>
 
 
+
+## "Hello, World" example
+
+Let us begin with the classic "Hello, world" example. First, here is the code:
+
+``` clojure
+(ns clojurewerkz.machine-head.examples.hello-world
+  (:gen-class)
+  (:require [clojurewerkz.machine-head.client :as mh]))
+
+(defn -main
+  [& args]
+  (let [id   (mh/generate-id)
+        conn (mh/connect "tcp://127.0.0.1:1883" id)]
+    (mh/subscribe conn ["hello"] (fn [^String topic _ ^bytes payload]
+                                   (println (String. payload "UTF-8"))
+                                   (mh/disconnect conn)
+                                   (System/exit 0)))
+    (mh/publish conn "hello" "Hello, world")))
+```
+
+This example demonstrates a very common communication scenario:
+*application A* wants to publish a message on a topic that
+*application B* listens on. In this case, the topic name is
+"hello". Let us go through the code step by step:
+
+``` clojure
+(ns clojurewerkz.machine-head.examples.hello-world
+  (:gen-class)
+  (:require [clojurewerkz.machine-head.client :as mh]))
+```
+
+defines our example app namespace that requires (loads) main Machine
+Head namespace, `langohr.core`. Our namespace will be compiled
+ahead-of-time (so we can run it).
+
+Clojure applications are compiled to JVM bytecode. The `-main`
+function is the entry point.
+
+A few things is going on here:
+
+ * We connect to MQTT broker using `clojurewerkz.machine-head.client/connect`. We pass two arguments
+ to it: connection URI and client id.
+ * We start a consumer on topic named `"hello"`
+ * We publish a message and disconnect when it is consumed
+
+### Connect to MQTT Broker
+
+``` clojure
+(let [id    (mh/generate-id)
+      conn  (mh/connect "tcp://127.0.0.1:1883" id)]
+  (comment ...))
+```
+
+connects to MQTT broker such as RabbitMQ at `127.0.0.1:1883` and a unique client id,
+returning the connection.
+
+`mh` is an alias for `clojurewerkz.machine-head.client` (see the ns snippet above).
+
+
+### Start a Consumer (Subscriber)
+
+Now that we have a connection open, we can start consuming messages on
+a topic:
+
+``` clojure
+(mh/subscribe conn ["hello"] (fn [^String topic _ ^bytes payload]
+                               (comment ...)))
+```
+
+We use `clojurewerkz.machine-head.client/subscribe` to add a consumer (subscription).
+Here's the handling function:
+
+``` clojure
+(fn [^String topic _ ^bytes payload]
+  (println (String. payload "UTF-8"))
+  (mh/disconnect conn)
+  (System/exit 0))
+```
+
+It takes a topic the message is delivered on, a Clojure map of message
+metadata and message payload as array of bytes. We turn it into a
+string and print it, then disconnect and exit.
+
+### Publish a Message
+
+To publish a message, we use `clojurewerkz.machine-head.client/publish`,
+which takes a connection, a topic and a payload (as a string or byte array):
+
+``` clojure
+(mh/publish conn "hello" "Hello, world")
+```
