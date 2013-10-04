@@ -249,3 +249,263 @@ which takes a connection, a topic and a payload (as a string or byte array):
 ``` clojure
 (mh/publish conn "hello" "Hello, world")
 ```
+
+### Disconnect
+
+Then we use `clojurewerkz.machine-head.client/disconnect` to close both the connection.
+
+``` clojure
+(mh/disconnect conn)
+```
+
+For the sake of simplicity, both the message producer (App I) and the
+consumer (App II) are running in the same JVM process. Now let us move
+on to a little bit more sophisticated example.
+
+
+## Blabbr: One-to-Many Publish/Subscribe (pubsub) Routing Example
+
+The previous example demonstrated how a connection to a broker is made
+and how to do 1:1 communication. Now let us
+take a look at another common scenario: broadcast, or multiple
+consumers and one producer.
+
+A very well-known broadcast example is Twitter: every time a person
+tweets, followers receive a notification. Blabbr, our imaginary
+information network, models this scenario: every network member has a
+separate queue and publishes blabs to a separate exchange. Three
+Blabbr members, Joe, Aaron and Bob, follow the official NBA account on
+Blabbr to get updates about what is happening in the world of
+basketball. Here is the code:
+
+``` clojure
+(ns clojurewerkz.machine-head.examples.blabbr
+  (:gen-class)
+  (:require [clojurewerkz.machine-head.client :as mh]))
+
+(def ^:const topic "nba/scores")
+
+(defn start-consumer
+  [conn ^String username]
+  (mh/subscribe conn
+                [topic]
+                (fn [^String topic _ ^bytes payload]
+                  (println (format "[consumer] %s received %s" username (String. payload "UTF-8"))))))
+
+(defn -main
+  [& args]
+  (let [id    (mh/generate-id)
+        conn  (mh/connect "tcp://127.0.0.1:1883" id)
+        users ["joe" "aaron" "bob"]]
+    (doseq [u users]
+      (let [c (mh/connect "tcp://127.0.0.1:1883" (format "consumer.%s" u))]
+        (start-consumer c u)))
+    (mh/publish conn topic "BOS 101, NYK 89")
+    (mh/publish conn topic "ORL 85, ALT 88")
+    (Thread/sleep 100)
+    (mh/disconnect conn)
+    (System/exit 0)))
+```
+
+In this example, connection is no different to opening a
+channel in the previous example:
+
+``` clojure
+(let [id    (mh/generate-id)
+      conn  (mh/connect "tcp://127.0.0.1:1883" id)]
+  (comment ...))
+```
+
+This piece of code
+
+``` clojure
+(defn start-consumer
+  [conn ^String username]
+  (mh/subscribe conn
+                [topic]
+                (fn [^String topic _ ^bytes payload]
+                  (println (format "[consumer] %s received %s" username (String. payload "UTF-8"))))))
+
+(doseq [u users]
+  (let [c (mh/connect "tcp://127.0.0.1:1883" (format "consumer.%s" u))]
+    (start-consumer c u)))
+```
+
+opens consumer connections and subscribes to 3 topics: `consumer.joe`,
+`consumer.aaron`, and `consumer.joe`. We emulate multiple users by connecting multiple
+times from the same JVM.
+
+We could have used a single consumer on a wildcard topic:
+
+``` clojure
+(mh/subscribe conn
+              ["nba/scores/+"]
+              (fn [^String topic _ ^bytes payload]
+                (println (format "[consumer] received a message on topic %s: %s" topic (String. payload "UTF-8"))))
+```
+
+`+` in this example matches a single segment, for example
+
+ * `nba/scores/aaron`
+ * `nba/scores/bob`
+ * `nba/scores/joe`
+
+Publishing in this example is not really different from the previous example
+
+``` clojure
+(mh/publish conn topic "BOS 101, NYK 89")
+(mh/publish conn topic "ORL 85, ALT 88")
+```
+
+
+## Weathr: Many-to-Many Topic Routing Example
+
+So far, we have seen point-to-point communication and
+broadcasting. Those two communication styles are possible with many
+protocols, for instance, HTTP handles these scenarios just fine. Next
+we are going to introduce you to *wildcard topics* and subscription
+with patterns.
+
+Our third example involves weather condition updates. What makes it
+different from the previous two examples is that not all of the
+consumers are interested in all of the messages. People who live in
+Portland usually do not care about the weather in Hong Kong (unless
+they are visiting soon). They are much more interested in weather
+conditions around Portland, possibly all of Oregon and sometimes a few
+neighbouring states.
+
+Our example features multiple consumer applications monitoring updates
+for different regions. Some are interested in updates for a specific
+city, others for a specific state and so on, all the way up to
+continents. Updates may overlap so that an update for San Diego, CA
+appears as an update for California, but also should show up on the
+North America updates list.
+
+Here is the code:
+
+``` clojure
+(ns clojurewerkz.machine-head.examples.weathr
+  (:gen-class)
+  (:require [clojurewerkz.machine-head.client :as mh]))
+
+(defn handle-delivery
+  [^String topic _ ^bytes payload]
+  (println (format "[consumer] received %s for topic %s" (String. payload "UTF-8") topic)))
+
+
+(defn -main
+  [& args]
+  (let [id    (mh/generate-id)
+        conn  (mh/connect "tcp://127.0.0.1:1883" id)]
+    (mh/subscribe conn ["americas/north/#"] handle-delivery)
+    (mh/subscribe conn ["americas/south/#"] handle-delivery)
+    (mh/subscribe conn ["americas/north/us/ca/+"] handle-delivery)
+    (mh/subscribe conn ["#/tx/austin"] handle-delivery)
+    (mh/subscribe conn ["europe/italy/rome"] handle-delivery)
+    (mh/subscribe conn ["asia/southeast/hk/+"] handle-delivery)
+    (mh/subscribe conn ["asia/southeast/#"] handle-delivery)
+    (mh/publish conn "americas/north/us/ca/sandiego"     "San Diego update")
+    (mh/publish conn "americas/north/us/ca/berkeley"     "Berkeley update")
+    (mh/publish conn "americas/north/us/ca/sanfrancisco" "SF update")
+    (mh/publish conn "americas/north/us/ny/newyork"      "NYC update")
+    (mh/publish conn "americas/south/brazil/saopaolo"    "São Paolo update")
+    (mh/publish conn "asia/southeast/hk/hongkong"        "Hong Kong update")
+    (mh/publish conn "asia/southeast/japan/kyoto"        "Kyoto update")
+    (mh/publish conn "asia/southeast/prc/shanghai"       "Shanghai update")
+    (mh/publish conn "europe/italy/roma"                 "Rome update")
+    (mh/publish conn "europe/france/paris"               "Paris update")
+    (Thread/sleep 150)
+    (mh/disconnect conn)
+    (System/exit 0)))
+```
+
+In this example we use a single connection for publishing and consuming.
+
+Multiple consumers use a single topic in this example. This is an
+example of [multicast](http://en.wikipedia.org/wiki/Multicast)
+messaging where consumers indicate which topics they are interested in
+(think of it as subscribing to a feed for an individual tag in your
+favourite blog as opposed to the full feed). For that, a *topic wildcard*
+(pattern) is used:
+
+``` clojure
+(mh/subscribe conn ["americas/south/#"] handle-delivery)
+(mh/subscribe conn ["americas/north/us/ca/+"] handle-delivery)
+```
+
+A topic pattern consists of several words separated by slashes, in a
+similar way to URI path segments. Here are a few examples:
+
+ * asia/southeast/thailand/bangkok
+ * sports/basketball
+ * usa/nasdaq/aapl
+ * tasks/search/indexing/accounts
+
+Now let us take a look at a few topics that match the "americas.south.#" pattern:
+
+ * americas.south
+ * americas.south.**brazil**
+ * americas.south.**brazil.saopaolo**
+ * americas.south.**chile.santiago**
+
+In other words, the `#` part of the pattern matches 1 or more words.
+
+For a pattern like `americas.south.+`, some matching routing keys would be:
+
+ * americas.south.**brazil**
+ * americas.south.**chile**
+ * americas.south.**peru**
+
+but not
+
+ * americas.south
+ * americas.south.chile.santiago
+
+so `+` only matches a single word. Topic segments (words) may contain
+the letters A-Z and a-z, digits 0-9 and spaces, separated by slashes.
+
+When you run this example, the output will look a bit like this:
+
+```
+[consumer] received San Diego update for topic americas/north/us/ca/sandiego
+[consumer] received Berkeley update for topic americas/north/us/ca/berkeley
+[consumer] received SF update for topic americas/north/us/ca/sanfrancisco
+[consumer] received NYC update for topic americas/north/us/ny/newyork
+[consumer] received São Paolo update for topic americas/south/brazil/saopaolo
+[consumer] received Hong Kong update for topic asia/southeast/hk/hongkong
+[consumer] received Kyoto update for topic asia/southeast/japan/kyoto
+[consumer] received Shanghai update for topic asia/southeast/prc/shanghai
+```
+
+As you can see, some messages were not routed to any consumer
+("deadlettered").
+
+
+## Wrapping Up
+
+This is the end of the tutorial. Congratulations! You have learned
+quite a bit about both MQTT and Machine Head.  MQTT has more features
+built into the protocol.  Other guides explain these features in
+depth, as well as use cases for them. To stay up to date with Machine
+Head development, [follow @clojurewerkz on
+Twitter](http://twitter.com/clojurewerkz) and [join our mailing
+list](http://groups.google.com/group/clojure-mqtt).
+
+
+## What to Read Next
+
+The documentation is organized as [a number of guides](/articles/guides.html), covering various topics.
+
+We recommend that you read the following guides first, if possible, in this order:
+
+TBD
+
+
+## Tell Us What You Think!
+
+Please take a moment to tell us what you think about this guide [on
+Twitter](http://twitter.com/clojurewerkz) or the [Clojure MQTT mailing list](https://groups.google.com/forum/#!forum/clojure-mqtt).
+
+Let us know what was unclear or what has not been covered. Maybe you
+do not like the guide style or grammar or discover spelling
+mistakes. Reader feedback is key to making the documentation better.
