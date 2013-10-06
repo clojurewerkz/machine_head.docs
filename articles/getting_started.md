@@ -106,16 +106,7 @@ Langohr artifacts are [released to Clojars](https://clojars.org/com.novemberain/
 
 ### With Leiningen
 
-Add Eclipse Paho repository to `project.clj`:
-
-``` clojure
-:repositories {"eclipse-paho" {:url "https://repo.eclipse.org/content/groups/paho/"
-                               :snapshots false
-                               :releases {:checksum :fail}}}
-```
-
-
-And then the dependency:
+Add the dependency:
 
 ``` clojure
 [clojurewerkz/machine_head "1.0.0-beta1"]
