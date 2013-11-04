@@ -21,7 +21,7 @@ This work is licensed under a <a rel="license" href="http://creativecommons.org/
 
 ## What version of Machine Head does this guide cover?
 
-This guide covers Machine Head 1.0.0-beta1.
+This guide covers Machine Head 1.0.0, including beta releases.
 
 
 ## Supported Clojure Versions
