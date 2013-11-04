@@ -109,7 +109,7 @@ Langohr artifacts are [released to Clojars](https://clojars.org/com.novemberain/
 Add the dependency:
 
 ``` clojure
-[clojurewerkz/machine_head "1.0.0-beta1"]
+[clojurewerkz/machine_head "1.0.0-beta3"]
 ```
 
 ### With Maven
@@ -133,7 +133,7 @@ And then the dependency:
 <dependency>
   <groupId>clojurewerkz</groupId>
   <artifactId>machine_head</artifactId>
-  <version>1.0.0-beta1</version>
+  <version>1.0.0-beta3</version>
 </dependency>
 ```
 
