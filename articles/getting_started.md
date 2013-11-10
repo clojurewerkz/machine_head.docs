@@ -100,9 +100,9 @@ then run the broker:
     mosquitto /usr/local/etc/mosquitto/mosquitto.conf
 
 
-## Adding Langohr Dependency To Your Project
+## Adding Machine Head Dependency To Your Project
 
-Langohr artifacts are [released to Clojars](https://clojars.org/com.novemberain/langohr).
+Machine Head artifacts are [released to Clojars](https://clojars.org/clojurewerkz/machine_head).
 
 ### With Leiningen
 
