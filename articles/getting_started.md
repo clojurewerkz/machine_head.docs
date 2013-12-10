@@ -109,7 +109,7 @@ Machine Head artifacts are [released to Clojars](https://clojars.org/clojurewerk
 Add the dependency:
 
 ``` clojure
-[clojurewerkz/machine_head "1.0.0-beta4"]
+[clojurewerkz/machine_head "1.0.0-beta5"]
 ```
 
 ### With Maven
@@ -133,7 +133,7 @@ And then the dependency:
 <dependency>
   <groupId>clojurewerkz</groupId>
   <artifactId>machine_head</artifactId>
-  <version>1.0.0-beta4</version>
+  <version>1.0.0-beta5</version>
 </dependency>
 ```
 
