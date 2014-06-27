@@ -109,7 +109,7 @@ Machine Head artifacts are [released to Clojars](https://clojars.org/clojurewerk
 Add the dependency:
 
 ``` clojure
-[clojurewerkz/machine_head "1.0.0-beta5"]
+[clojurewerkz/machine_head "1.0.0-beta8"]
 ```
 
 ### With Maven
@@ -123,7 +123,7 @@ Add Clojars and Eclipse Paho repository definitions to your `pom.xml`:
 </repository>
 <repository>
   <id>eclipse-paho</id>
-  <url>https://repo.eclipse.org/content/groups/paho/</url>
+  <url>https://repo.eclipse.org/content/repositories/paho-releases/</url>
 </repository>
 ```
 
@@ -133,7 +133,7 @@ And then the dependency:
 <dependency>
   <groupId>clojurewerkz</groupId>
   <artifactId>machine_head</artifactId>
-  <version>1.0.0-beta5</version>
+  <version>1.0.0-beta8</version>
 </dependency>
 ```
 
