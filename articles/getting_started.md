@@ -109,7 +109,7 @@ Machine Head artifacts are [released to Clojars](https://clojars.org/clojurewerk
 Add the dependency:
 
 ``` clojure
-[clojurewerkz/machine_head "1.0.0-beta8"]
+[clojurewerkz/machine_head "1.0.0-beta9"]
 ```
 
 ### With Maven
@@ -133,7 +133,7 @@ And then the dependency:
 <dependency>
   <groupId>clojurewerkz</groupId>
   <artifactId>machine_head</artifactId>
-  <version>1.0.0-beta8</version>
+  <version>1.0.0-beta9</version>
 </dependency>
 ```
 
@@ -211,11 +211,11 @@ returning the connection.
 ### Start a Consumer (Subscriber)
 
 Now that we have a connection open, we can start consuming messages on
-a topic:
+a topic with QoS level 0:
 
 ``` clojure
-(mh/subscribe conn ["hello"] (fn [^String topic _ ^bytes payload]
-                               (comment ...)))
+(mh/subscribe conn {"hello" 0} (fn [^String topic _ ^bytes payload]
+                                 (comment ...)))
 ```
 
 We use `clojurewerkz.machine-head.client/subscribe` to add a consumer (subscription).
@@ -231,6 +231,13 @@ Here's the handling function:
 It takes a topic the message is delivered on, a Clojure map of message
 metadata and message payload as array of bytes. We turn it into a
 string and print it, then disconnect and exit.
+
+It is possible to subscribe to multiple topics at once:
+
+``` clojure
+(mh/subscribe conn {"hello" 0 "/another/topic/#" 1} (fn [^String topic _ ^bytes payload]
+                                                      (comment ...)))
+```
 
 ### Publish a Message
 
