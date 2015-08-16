@@ -162,7 +162,7 @@ Let us begin with the classic "Hello, world" example. First, here is the code:
   [& args]
   (let [id   (mh/generate-id)
         conn (mh/connect "tcp://127.0.0.1:1883" id)]
-    (mh/subscribe conn ["hello"] (fn [^String topic _ ^bytes payload]
+    (mh/subscribe conn {"hello" 0} (fn [^String topic _ ^bytes payload]
                                    (println (String. payload "UTF-8"))
                                    (mh/disconnect conn)
                                    (System/exit 0)))
@@ -286,7 +286,7 @@ basketball. Here is the code:
 (defn start-consumer
   [conn ^String username]
   (mh/subscribe conn
-                [topic]
+                {topic 0}
                 (fn [^String topic _ ^bytes payload]
                   (println (format "[consumer] %s received %s" username (String. payload "UTF-8"))))))
 
@@ -320,7 +320,7 @@ This piece of code
 (defn start-consumer
   [conn ^String username]
   (mh/subscribe conn
-                [topic]
+                {topic 0}
                 (fn [^String topic _ ^bytes payload]
                   (println (format "[consumer] %s received %s" username (String. payload "UTF-8"))))))
 
@@ -395,13 +395,13 @@ Here is the code:
   [& args]
   (let [id    (mh/generate-id)
         conn  (mh/connect "tcp://127.0.0.1:1883" id)]
-    (mh/subscribe conn ["americas/north/#"] handle-delivery)
-    (mh/subscribe conn ["americas/south/#"] handle-delivery)
-    (mh/subscribe conn ["americas/north/us/ca/+"] handle-delivery)
-    (mh/subscribe conn ["#/tx/austin"] handle-delivery)
-    (mh/subscribe conn ["europe/italy/rome"] handle-delivery)
-    (mh/subscribe conn ["asia/southeast/hk/+"] handle-delivery)
-    (mh/subscribe conn ["asia/southeast/#"] handle-delivery)
+    (mh/subscribe conn {"americas/north/#" 0} handle-delivery)
+    (mh/subscribe conn {"americas/south/#" 0} handle-delivery)
+    (mh/subscribe conn {"americas/north/us/ca/+" 0} handle-delivery)
+    (mh/subscribe conn {"#/tx/austin" 0} handle-delivery)
+    (mh/subscribe conn {"europe/italy/rome" 0} handle-delivery)
+    (mh/subscribe conn {"asia/southeast/hk/+" 0} handle-delivery)
+    (mh/subscribe conn {"asia/southeast/#" 0} handle-delivery)
     (mh/publish conn "americas/north/us/ca/sandiego"     "San Diego update")
     (mh/publish conn "americas/north/us/ca/berkeley"     "Berkeley update")
     (mh/publish conn "americas/north/us/ca/sanfrancisco" "SF update")
@@ -427,8 +427,8 @@ favourite blog as opposed to the full feed). For that, a *topic wildcard*
 (pattern) is used:
 
 ``` clojure
-(mh/subscribe conn ["americas/south/#"] handle-delivery)
-(mh/subscribe conn ["americas/north/us/ca/+"] handle-delivery)
+(mh/subscribe conn {"americas/south/#" 0} handle-delivery)
+(mh/subscribe conn {"americas/north/us/ca/+" 0} handle-delivery)
 ```
 
 A topic pattern consists of several words separated by slashes, in a
