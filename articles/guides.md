@@ -1,33 +1,20 @@
 ---
-title: "Project Name: all documentation guides"
+title: "Machine Head: all documentation guides"
 layout: article
 ---
 
 ## Guide list
 
-[Project Name documentation](https://github.com/clojurewerkz/) is organized as a number of guides, covering all kinds of topics.
+[Machine Head documentation](https://github.com/clojurewerkz/) is organized as a number of guides, covering all kinds of topics.
 
 We recommend that you read these guides, if possible, in this order:
 
 
 ###  [Getting started](/articles/getting_started.html)
 
-An overview of Project Name with a quick tutorial that helps you to get started with it. It should take about
-10 minutes to read and study the provided code examples
+This guide is a quick tutorial that helps you to get started with the MQTT protocol in general and the Machine Head in particular.
+It should take about 15 minutes to read and study the provided code examples.
 
-### [Another Guide](/)
+###  [A missing guide?](https://github.com/clojurewerkz/machine_head.docs/issues)
 
-This guide covers:
-
- * This thing
- * That thing
- * This other thing
-
-
-### [Yet another guide](/)
-
-This guide covers:
-
- * This awesome feature
- * That common problem
- * How to reach Web Scale
+Please [ask us to create a new guide](https://github.com/clojurewerkz/machine_head.docs/issues) via a GitHub issue if you discover a topic or use case not covered well enough by the existing guides.
