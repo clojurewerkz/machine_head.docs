@@ -38,7 +38,7 @@ Machine Head is tested against [RabbitMQ 3.x MQTT plugin](http://www.rabbitmq.co
 
 Machine Head is a Clojure client for [MQTT](http://mqtt.org/) v3.1 brokers. MQTT is
 an efficient messaging protocol designed primarily for low-power devices such as
-telemetry sensors. 
+telemetry sensors.
 
 Clients communicate with MQTT brokers such as RabbitMQ and Mosquitto. Clients that
 publish messages are called *producers* or *publishers*, those that consume
@@ -78,11 +78,11 @@ repository](http://www.rabbitmq.com/debian.html#apt).
 For RPM-based distributions like RedHat or CentOS, the RabbitMQ team
 provides an [RPM package](http://www.rabbitmq.com/install.html#rpm).
 
-<div class="alert alert-error"> <strong>Note:</strong> The RabbitMQ
+<div class="alert alert-error"><strong>Note:</strong> The RabbitMQ
 package that ships with some of the recent Ubuntu versions (for
 example, 11.10 and 12.04) is outdated and *may not ship with MQTT
 plugin* (you will need at least RabbitMQ v3.0 for use with this
-guide).  </div>
+guide).</div>
 
 
 
@@ -109,7 +109,7 @@ Machine Head artifacts are [released to Clojars](https://clojars.org/clojurewerk
 Add the dependency:
 
 ``` clojure
-[clojurewerkz/machine_head "1.0.0-beta9"]
+[clojurewerkz/machine_head "1.0.0"]
 ```
 
 ### With Maven
@@ -133,7 +133,7 @@ And then the dependency:
 <dependency>
   <groupId>clojurewerkz</groupId>
   <artifactId>machine_head</artifactId>
-  <version>1.0.0-beta9</version>
+  <version>1.0.0</version>
 </dependency>
 ```
 
@@ -160,8 +160,7 @@ Let us begin with the classic "Hello, world" example. First, here is the code:
 
 (defn -main
   [& args]
-  (let [id   (mh/generate-id)
-        conn (mh/connect "tcp://127.0.0.1:1883" id)]
+  (let [conn (mh/connect "tcp://127.0.0.1:1883")]
     (mh/subscribe conn {"hello" 0} (fn [^String topic _ ^bytes payload]
                                    (println (String. payload "UTF-8"))
                                    (mh/disconnect conn)
@@ -181,7 +180,7 @@ This example demonstrates a very common communication scenario:
 ```
 
 defines our example app namespace that requires (loads) main Machine
-Head namespace, `langohr.core`. Our namespace will be compiled
+Head namespace, `clojurewerkz.machine-head.client`. Our namespace will be compiled
 ahead-of-time (so we can run it).
 
 Clojure applications are compiled to JVM bytecode. The `-main`
@@ -189,23 +188,21 @@ function is the entry point.
 
 A few things is going on here:
 
- * We connect to MQTT broker using `clojurewerkz.machine-head.client/connect`. We pass two arguments
- to it: connection URI and client id.
+ * We connect to MQTT broker using `clojurewerkz.machine-head.client/connect`. We pass one argument
+ to it: connection URI.
  * We start a consumer on topic named `"hello"`
  * We publish a message and disconnect when it is consumed
 
 ### Connect to MQTT Broker
 
 ``` clojure
-(let [id    (mh/generate-id)
-      conn  (mh/connect "tcp://127.0.0.1:1883" id)]
+(let [conn  (mh/connect "tcp://127.0.0.1:1883")]
   (comment ...))
 ```
 
-connects to MQTT broker such as RabbitMQ at `127.0.0.1:1883` and a unique client id,
-returning the connection.
+connects to MQTT broker such as RabbitMQ at `127.0.0.1:1883` (generating a unique client id so that you can create multiple connections), returning the connection.
 
-`mh` is an alias for `clojurewerkz.machine-head.client` (see the ns snippet above).
+`mh` is an alias for `clojurewerkz.machine-head.client` (see the `ns` snippet above).
 
 
 ### Start a Consumer (Subscriber)
@@ -232,10 +229,10 @@ It takes a topic the message is delivered on, a Clojure map of message
 metadata and message payload as array of bytes. We turn it into a
 string and print it, then disconnect and exit.
 
-It is possible to subscribe to multiple topics at once:
+It is possible to subscribe to multiple topics at once and to use different QoS for them:
 
 ``` clojure
-(mh/subscribe conn {"hello" 0 "/another/topic/#" 1} (fn [^String topic _ ^bytes payload]
+(mh/subscribe conn {"hello" 1 "/another/topic/#" 0} (fn [^String topic _ ^bytes payload]
                                                       (comment ...)))
 ```
 
@@ -256,8 +253,8 @@ Then we use `clojurewerkz.machine-head.client/disconnect` to close both the conn
 (mh/disconnect conn)
 ```
 
-For the sake of simplicity, both the message producer (App I) and the
-consumer (App II) are running in the same JVM process. Now let us move
+For the sake of simplicity, both the message producer (application A) and the
+consumer (application B) are running in the same JVM process. Now let us move
 on to a little bit more sophisticated example.
 
 
@@ -292,11 +289,10 @@ basketball. Here is the code:
 
 (defn -main
   [& args]
-  (let [id    (mh/generate-id)
-        conn  (mh/connect "tcp://127.0.0.1:1883" id)
+  (let [conn  (mh/connect "tcp://127.0.0.1:1883")
         users ["joe" "aaron" "bob"]]
     (doseq [u users]
-      (let [c (mh/connect "tcp://127.0.0.1:1883" (format "consumer.%s" u))]
+      (let [c (mh/connect "tcp://127.0.0.1:1883" {:client-id (format "consumer.%s" u)})]
         (start-consumer c u)))
     (mh/publish conn topic "BOS 101, NYK 89")
     (mh/publish conn topic "ORL 85, ALT 88")
@@ -309,8 +305,7 @@ In this example, connection is no different to opening a
 channel in the previous example:
 
 ``` clojure
-(let [id    (mh/generate-id)
-      conn  (mh/connect "tcp://127.0.0.1:1883" id)]
+(let [conn  (mh/connect "tcp://127.0.0.1:1883")]
   (comment ...))
 ```
 
@@ -325,35 +320,13 @@ This piece of code
                   (println (format "[consumer] %s received %s" username (String. payload "UTF-8"))))))
 
 (doseq [u users]
-  (let [c (mh/connect "tcp://127.0.0.1:1883" (format "consumer.%s" u))]
+  (let [c (mh/connect "tcp://127.0.0.1:1883" {:client-id (format "consumer.%s" u)})]
     (start-consumer c u)))
 ```
 
-opens consumer connections and subscribes to 3 topics: `consumer.joe`,
+opens consumer connections (notice that each connection needs a unique `client-id`) and subscribes to 3 topics: `consumer.joe`,
 `consumer.aaron`, and `consumer.joe`. We emulate multiple users by connecting multiple
 times from the same JVM.
-
-We could have used a single consumer on a wildcard topic:
-
-``` clojure
-(mh/subscribe conn
-              ["nba/scores/+"]
-              (fn [^String topic _ ^bytes payload]
-                (println (format "[consumer] received a message on topic %s: %s" topic (String. payload "UTF-8"))))
-```
-
-`+` in this example matches a single segment, for example
-
- * `nba/scores/aaron`
- * `nba/scores/bob`
- * `nba/scores/joe`
-
-Publishing in this example is not really different from the previous example
-
-``` clojure
-(mh/publish conn topic "BOS 101, NYK 89")
-(mh/publish conn topic "ORL 85, ALT 88")
-```
 
 
 ## Weathr: Many-to-Many Topic Routing Example
@@ -381,27 +354,29 @@ North America updates list.
 
 Here is the code:
 
-``` clojure
+```clojure
 (ns clojurewerkz.machine-head.examples.weathr
   (:gen-class)
   (:require [clojurewerkz.machine-head.client :as mh]))
 
 (defn handle-delivery
-  [^String topic _ ^bytes payload]
-  (println (format "[consumer] received %s for topic %s" (String. payload "UTF-8") topic)))
+  [^String subscribed-for ^String topic _ ^bytes payload]
+  (println
+      (format "[consumer of %s] received %s for topic %s"
+        subscribed-for
+        (String. payload "UTF-8")
+        topic)))
 
 
 (defn -main
   [& args]
-  (let [id    (mh/generate-id)
-        conn  (mh/connect "tcp://127.0.0.1:1883" id)]
-    (mh/subscribe conn {"americas/north/#" 0} handle-delivery)
-    (mh/subscribe conn {"americas/south/#" 0} handle-delivery)
-    (mh/subscribe conn {"americas/north/us/ca/+" 0} handle-delivery)
-    (mh/subscribe conn {"#/tx/austin" 0} handle-delivery)
-    (mh/subscribe conn {"europe/italy/rome" 0} handle-delivery)
-    (mh/subscribe conn {"asia/southeast/hk/+" 0} handle-delivery)
-    (mh/subscribe conn {"asia/southeast/#" 0} handle-delivery)
+  (let [conn  (mh/connect "tcp://127.0.0.1:1883")]
+    (mh/subscribe conn {"americas/north/#" 0} (partial handle-delivery "americas/north/#"))
+    (mh/subscribe conn {"americas/south/#" 0} (partial handle-delivery "americas/south/#"))
+    (mh/subscribe conn {"americas/north/us/ca/+" 0} (partial handle-delivery "americas/north/us/ca/+"))
+    (mh/subscribe conn {"europe/italy/rome" 0} (partial handle-delivery "europe/italy/rome"))
+    (mh/subscribe conn {"asia/southeast/hk/+" 0} (partial handle-delivery "asia/southeast//hk/+"))
+    (mh/subscribe conn {"asia/southeast/#" 0} (partial handle-delivery "asia/southeast/#"))
     (mh/publish conn "americas/north/us/ca/sandiego"     "San Diego update")
     (mh/publish conn "americas/north/us/ca/berkeley"     "Berkeley update")
     (mh/publish conn "americas/north/us/ca/sanfrancisco" "SF update")
@@ -410,7 +385,7 @@ Here is the code:
     (mh/publish conn "asia/southeast/hk/hongkong"        "Hong Kong update")
     (mh/publish conn "asia/southeast/japan/kyoto"        "Kyoto update")
     (mh/publish conn "asia/southeast/prc/shanghai"       "Shanghai update")
-    (mh/publish conn "europe/italy/roma"                 "Rome update")
+    (mh/publish conn "europe/italy/rome"                 "Rome update")
     (mh/publish conn "europe/france/paris"               "Paris update")
     (Thread/sleep 150)
     (mh/disconnect conn)
@@ -427,8 +402,8 @@ favourite blog as opposed to the full feed). For that, a *topic wildcard*
 (pattern) is used:
 
 ``` clojure
-(mh/subscribe conn {"americas/south/#" 0} handle-delivery)
-(mh/subscribe conn {"americas/north/us/ca/+" 0} handle-delivery)
+(mh/subscribe conn {"americas/south/#" 0} (partial handle-delivery "americas/south/#")
+(mh/subscribe conn {"americas/north/us/ca/+" 0} (partial handle-delivery "americas/north/us/ca/+"))
 ```
 
 A topic pattern consists of several words separated by slashes, in a
@@ -439,25 +414,25 @@ similar way to URI path segments. Here are a few examples:
  * usa/nasdaq/aapl
  * tasks/search/indexing/accounts
 
-Now let us take a look at a few topics that match the "americas.south.#" pattern:
+Now let us take a look at a few topics that match the "americas/south/#" pattern:
 
- * americas.south
- * americas.south.**brazil**
- * americas.south.**brazil.saopaolo**
- * americas.south.**chile.santiago**
+ * americas/south
+ * americas/south/**brazil**
+ * americas/south/**brazil/saopaolo**
+ * americas/south/**chile.santiago**
 
 In other words, the `#` part of the pattern matches 1 or more words.
 
-For a pattern like `americas.south.+`, some matching routing keys would be:
+For a pattern like `americas/south/+`, some matching routing keys would be:
 
- * americas.south.**brazil**
- * americas.south.**chile**
- * americas.south.**peru**
+ * americas/south/**brazil**
+ * americas/south/**chile**
+ * americas/south/**peru**
 
 but not
 
- * americas.south
- * americas.south.chile.santiago
+ * americas/south
+ * americas/south/chile/santiago
 
 so `+` only matches a single word. Topic segments (words) may contain
 the letters A-Z and a-z, digits 0-9 and spaces, separated by slashes.
@@ -465,26 +440,31 @@ the letters A-Z and a-z, digits 0-9 and spaces, separated by slashes.
 When you run this example, the output will look a bit like this:
 
 ```
-[consumer] received San Diego update for topic americas/north/us/ca/sandiego
-[consumer] received Berkeley update for topic americas/north/us/ca/berkeley
-[consumer] received SF update for topic americas/north/us/ca/sanfrancisco
-[consumer] received NYC update for topic americas/north/us/ny/newyork
-[consumer] received São Paolo update for topic americas/south/brazil/saopaolo
-[consumer] received Hong Kong update for topic asia/southeast/hk/hongkong
-[consumer] received Kyoto update for topic asia/southeast/japan/kyoto
-[consumer] received Shanghai update for topic asia/southeast/prc/shanghai
+[consumer of americas/north/us/ca/+] received San Diego update for topic americas/north/us/ca/sandiego
+[consumer of americas/north/#] received San Diego update for topic americas/north/us/ca/sandiego
+[consumer of americas/north/us/ca/+] received Berkeley update for topic americas/north/us/ca/berkeley
+[consumer of americas/north/#] received Berkeley update for topic americas/north/us/ca/berkeley
+[consumer of americas/north/us/ca/+] received SF update for topic americas/north/us/ca/sanfrancisco
+[consumer of americas/north/#] received SF update for topic americas/north/us/ca/sanfrancisco
+[consumer of europe/italy/rome] received Rome update for topic europe/italy/rome
+[consumer of americas/north/#] received NYC update for topic americas/north/us/ny/newyork
+[consumer of americas/south/#] received São Paolo update for topic americas/south/brazil/saopaolo
+[consumer of asia/southeast/#] received Hong Kong update for topic asia/southeast/hk/hongkong
+[consumer of asia/southeast//hk/+] received Hong Kong update for topic asia/southeast/hk/hongkong
+[consumer of asia/southeast/#] received Kyoto update for topic asia/southeast/japan/kyoto
+[consumer of asia/southeast/#] received Shanghai update for topic asia/southeast/prc/shanghai
 ```
 
-As you can see, some messages were not routed to any consumer
-("deadlettered").
+As you can see, some messages - the Paris update - were not routed to any consumer
+("deadlettered"). (You could set a handler for such messages via the option
+`:on-unhandled-message` of `connect`.)
 
 
 ## Wrapping Up
 
 This is the end of the tutorial. Congratulations! You have learned
 quite a bit about both MQTT and Machine Head.  MQTT has more features
-built into the protocol.  Other guides explain these features in
-depth, as well as use cases for them. To stay up to date with Machine
+built into the protocol. To learn more about them, see below. To stay up to date with Machine
 Head development, [follow @clojurewerkz on
 Twitter](http://twitter.com/clojurewerkz) and [join our mailing
 list](http://groups.google.com/group/clojure-mqtt).
@@ -494,8 +474,4 @@ list](http://groups.google.com/group/clojure-mqtt).
 
 The documentation is organized as [a number of guides](/articles/guides.html), covering various topics.
 
-We recommend that you read the following guides first, if possible, in this order:
-
-TBD
-
-
+You might also want to check the docstrings of `connect`, `subscribe`, and `publish`. And some of the Java Paho Client JavaDocs might be of relevance.

@@ -5,6 +5,5 @@ gem "jekyll", "~> 3.3.1"
 # it manually with --with-iconv-dir:
 #
 # gem install iconv -- --with-iconv-dir=~/.rvm/usr
-gem "redcarpet"
 gem "iconv"
 gem "albino"
