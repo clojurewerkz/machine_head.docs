@@ -3,9 +3,7 @@ destination: ./_site
 plugins_dir: ./_plugins
 exclude: [bin, CNAME, Gemfile, Gemfile.lock, README.md]
 permalink: /:title
-markdown: kramdown
-url: http://clojuremqtt.info/
-
-kramdown:
-    input:          GFM
-    hard_wrap:      false
+highlighter: pygments
+markdown: redcarpet
+redcarpet:
+  extensions: ["no_intra_emphasis", "fenced_code_blocks", "autolink", "tables", "with_toc_data"]
